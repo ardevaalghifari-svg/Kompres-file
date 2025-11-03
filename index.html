@@ -3,228 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kompresor Super Lancar ⚡</title>
+<title>Kompresor Ultra Cepat ⚡</title>
 <style>
   body {
     font-family: "Poppins", sans-serif;
-    background: linear-gradient(135deg, #eceff1, #fafafa);
-    padding: 40px 20px;
+    background: linear-gradient(135deg,#e8f5e9,#f1f8e9);
     text-align: center;
+    padding: 40px 20px;
     color: #333;
   }
-
-  h1 {
-    margin-bottom: 10px;
-  }
-
+  h1 {margin-bottom:10px;}
   .section {
-    background: #fff;
-    margin: 20px auto;
-    padding: 20px;
-    border-radius: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    max-width: 500px;
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    margin:20px auto;
+    padding:20px;
+    max-width:520px;
   }
-
-  input[type="file"] {
-    display: block;
-    margin: 10px auto;
-    padding: 10px;
-    border: 2px dashed #4CAF50;
-    border-radius: 8px;
-    background: #f9f9f9;
-    width: 95%;
+  input[type=file]{
+    border:2px dashed #4CAF50;
+    border-radius:8px;
+    background:#fafafa;
+    padding:10px;
+    width:95%;
   }
-
-  button {
-    background: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: 0.3s;
-    font-weight: 600;
+  button{
+    background:#4CAF50;
+    color:#fff;
+    border:none;
+    padding:10px 20px;
+    border-radius:8px;
+    font-weight:600;
+    margin-top:10px;
+    cursor:pointer;
+    transition:.3s;
   }
-
-  button:hover {
-    background: #43a047;
+  button:hover{background:#43a047;}
+  progress{width:100%;height:15px;border-radius:8px;margin-top:10px;}
+  a.download{
+    display:inline-block;margin-top:15px;
+    background:#2196F3;color:#fff;
+    padding:10px 15px;border-radius:8px;
+    text-decoration:none;
   }
-
-  progress {
-    width: 100%;
-    height: 15px;
-    border-radius: 8px;
-    margin-top: 10px;
-  }
-
-  a.download {
-    display: inline-block;
-    margin-top: 15px;
-    color: #fff;
-    background: #2196F3;
-    padding: 10px 15px;
-    border-radius: 8px;
-    text-decoration: none;
-  }
-
-  a.download:hover {
-    background: #1976D2;
-  }
-
-  .result {
-    margin-top: 10px;
-    font-size: 15px;
-    line-height: 1.5em;
-  }
-
-  footer {
-    margin-top: 40px;
-    color: #777;
-    font-size: 13px;
-  }
+  a.download:hover{background:#1976D2;}
+  .result{margin-top:10px;line-height:1.5em;}
+  footer{margin-top:40px;color:#777;font-size:13px;}
 </style>
 </head>
 <body>
-  <h1>📦 Kompresor Super Lancar</h1>
-  <p>Bisa kompres file besar atau folder sampai ±1GB tanpa nge-freeze 💪</p>
+<h1>📦 Kompresor Ultra Cepat</h1>
+<p>Kompres file & folder besar sampai ±1 GB tanpa lag 🔥</p>
 
-  <!-- Kompres File -->
-  <div class="section">
-    <h2>🗂️ Kompres File ke ZIP</h2>
-    <input type="file" id="zipInput" multiple>
-    <button id="zipBtn">Mulai Kompres</button>
-    <progress id="zipProgress" value="0" max="100"></progress>
-    <div id="zipResult" class="result"></div>
-  </div>
+<div class="section">
+  <h2>🗂️ Kompres File ke ZIP</h2>
+  <input type="file" id="zipInput" multiple>
+  <button id="zipBtn">Mulai Kompres</button>
+  <progress id="zipProgress" value="0" max="100"></progress>
+  <div id="zipResult" class="result"></div>
+</div>
 
-  <!-- Kompres Folder -->
-  <div class="section">
-    <h2>📁 Kompres Folder ke ZIP</h2>
-    <input type="file" id="folderInput" webkitdirectory directory multiple>
-    <button id="folderBtn">Kompres Folder</button>
-    <progress id="folderProgress" value="0" max="100"></progress>
-    <div id="folderResult" class="result"></div>
-  </div>
+<div class="section">
+  <h2>📁 Kompres Folder ke ZIP</h2>
+  <input type="file" id="folderInput" webkitdirectory directory multiple>
+  <button id="folderBtn">Kompres Folder</button>
+  <progress id="folderProgress" value="0" max="100"></progress>
+  <div id="folderResult" class="result"></div>
+</div>
 
-  <footer>
-    ⚙️ Semua proses dilakukan 100% offline di browser.
-  </footer>
+<footer>💡 Semua dilakukan 100% offline di browser.</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+const delay = ms => new Promise(r => setTimeout(r, ms));
 
-  <script>
-    // Fungsi umum untuk update progress
-    function updateProgress(progressElement, percent) {
-      progressElement.value = percent;
+async function processFilesAsync(zip, files, updateProgress, useRelative=false){
+  const total = files.length;
+  let processed = 0;
+
+  for(const file of files){
+    // Baca per chunk agar hemat RAM
+    const chunkSize = 2 * 1024 * 1024; // 2MB per potong
+    const chunks = Math.ceil(file.size / chunkSize);
+    let fileData = [];
+    for(let i=0;i<chunks;i++){
+      const start = i*chunkSize;
+      const end = Math.min(file.size,(i+1)*chunkSize);
+      const blobPart = file.slice(start,end);
+      const buffer = await blobPart.arrayBuffer();
+      fileData.push(new Uint8Array(buffer));
+      // jeda kecil agar UI tidak freeze
+      if(i % 3 === 0) await delay(0);
     }
+    const fullBuffer = new Blob(fileData);
+    const path = useRelative ? file.webkitRelativePath : file.name;
+    zip.file(path, fullBuffer);
 
-    // Fungsi untuk kompres file besar tanpa freeze
-    async function compressFiles(files, resultElement, progressElement, filename) {
-      if (!files.length) return alert("Pilih file terlebih dahulu!");
-      const zip = new JSZip();
-      const total = files.length;
-      let processed = 0;
+    processed++;
+    updateProgress(Math.round((processed/total)*100));
+    if(processed % 5 === 0) await delay(10);
+  }
+}
 
-      resultElement.innerHTML = "⏳ Sedang memproses file...";
-      updateProgress(progressElement, 0);
+async function createZip(files, resultEl, progressEl, filename, useRelative=false){
+  if(!files.length){alert("Pilih file terlebih dahulu!");return;}
+  resultEl.textContent = "⏳ Memproses file...";
+  progressEl.value = 0;
+  const zip = new JSZip();
 
-      // Tambahkan file satu per satu secara asynchronous
-      for (const file of files) {
-        await new Promise(res => {
-          const reader = new FileReader();
-          reader.onload = e => {
-            zip.file(file.name, e.target.result);
-            processed++;
-            const percent = Math.round((processed / total) * 100);
-            updateProgress(progressElement, percent);
-            res();
-          };
-          reader.readAsArrayBuffer(file);
-        });
-      }
+  await processFilesAsync(zip, files, p=>progressEl.value=p, useRelative);
 
-      // Generate ZIP (streaming)
-      const blob = await zip.generateAsync(
-        { type: "blob", compression: "DEFLATE", compressionOptions: { level: 9 } },
-        metadata => {
-          const percent = Math.round(metadata.percent);
-          updateProgress(progressElement, percent);
-        }
-      );
+  resultEl.textContent = "📦 Mengompres, mohon tunggu...";
+  const blob = await zip.generateAsync(
+    {type:"blob",compression:"DEFLATE",compressionOptions:{level:9}},
+    meta=>progressEl.value=Math.round(meta.percent)
+  );
 
-      // Buat link download
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.textContent = "💾 Download ZIP";
-      link.className = "download";
+  const link=document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download=filename;
+  link.textContent="💾 Download ZIP";
+  link.className="download";
 
-      const size = (blob.size / 1024 / 1024).toFixed(2);
-      resultElement.innerHTML = `Berhasil dikompres!<br>Ukuran ZIP: <b>${size} MB</b><br>`;
-      resultElement.appendChild(link);
+  const size=(blob.size/1024/1024).toFixed(2);
+  resultEl.innerHTML=`Selesai!<br>Ukuran ZIP: <b>${size} MB</b><br>`;
+  resultEl.appendChild(link);
+  progressEl.value=100;
+}
 
-      updateProgress(progressElement, 100);
-    }
+// File
+document.getElementById("zipBtn").addEventListener("click",()=>{
+  const f=document.getElementById("zipInput").files;
+  createZip(f,document.getElementById("zipResult"),document.getElementById("zipProgress"),"file_kompres.zip");
+});
 
-    // Kompres File
-    document.getElementById("zipBtn").addEventListener("click", async () => {
-      const files = document.getElementById("zipInput").files;
-      const result = document.getElementById("zipResult");
-      const progress = document.getElementById("zipProgress");
-      compressFiles(files, result, progress, "file_kompres.zip");
-    });
-
-    // Kompres Folder
-    document.getElementById("folderBtn").addEventListener("click", async () => {
-      const files = document.getElementById("folderInput").files;
-      const result = document.getElementById("folderResult");
-      const progress = document.getElementById("folderProgress");
-      if (!files.length) return alert("Pilih folder dulu!");
-
-      const zip = new JSZip();
-      let processed = 0;
-      const total = files.length;
-
-      result.innerHTML = "⏳ Sedang memproses folder...";
-      updateProgress(progress, 0);
-
-      // Tambahkan file dengan path relatif
-      for (const file of files) {
-        await new Promise(res => {
-          const reader = new FileReader();
-          reader.onload = e => {
-            zip.file(file.webkitRelativePath, e.target.result);
-            processed++;
-            const percent = Math.round((processed / total) * 100);
-            updateProgress(progress, percent);
-            res();
-          };
-          reader.readAsArrayBuffer(file);
-        });
-      }
-
-      const blob = await zip.generateAsync(
-        { type: "blob", compression: "DEFLATE", compressionOptions: { level: 9 } },
-        metadata => {
-          const percent = Math.round(metadata.percent);
-          updateProgress(progress, percent);
-        }
-      );
-
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "folder_kompres.zip";
-      link.textContent = "💾 Download ZIP Folder";
-      link.className = "download";
-
-      const size = (blob.size / 1024 / 1024).toFixed(2);
-      result.innerHTML = `Folder dikompres!<br>Ukuran ZIP: <b>${size} MB</b><br>`;
-      result.appendChild(link);
-
-      updateProgress(progress, 100);
-    });
-  </script>
+// Folder
+document.getElementById("folderBtn").addEventListener("click",()=>{
+  const f=document.getElementById("folderInput").files;
+  createZip(f,document.getElementById("folderResult"),document.getElementById("folderProgress"),"folder_kompres.zip",true);
+});
+</script>
 </body>
 </html>
