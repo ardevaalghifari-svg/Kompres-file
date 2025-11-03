@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kompresor Serbaguna 🔧</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #e0e0e0, #fafafa);
+      padding: 40px 20px;
+      text-align: center;
+      color: #333;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .section {
+      background: #fff;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 500px;
+      text-align: center;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 10px auto;
+      padding: 8px;
+      border: 2px dashed #4CAF50;
+      border-radius: 8px;
+      background: #f9f9f9;
+      width: 95%;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.3s;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: #43a047;
+    }
+
+    hr {
+      margin: 25px 0;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+
+    .result {
+      margin-top: 15px;
+      font-size: 15px;
+      line-height: 1.6em;
+      color: #444;
+    }
+
+    a.download {
+      display: inline-block;
+      margin-top: 10px;
+      color: #fff;
+      background: #2196F3;
+      padding: 10px 15px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    a.download:hover {
+      background: #1976D2;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 13px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📦 Kompresor File Serbaguna</h1>
+  <p>Unggah PDF, beberapa file, atau satu folder penuh untuk dikompres otomatis 🔽</p>
+
+  <!-- ==================== KOMPRES PDF ==================== -->
+  <div class="section">
+    <h2>📄 Kompres PDF</h2>
+    <input type="file" id="pdfInput" accept="application/pdf">
+    <button id="compressPdfBtn">Kompres PDF</button>
+    <div id="pdfResult" class="result"></div>
+  </div>
+
+  <!-- ==================== KOMPRES FILE KE ZIP ==================== -->
+  <div class="section">
+    <h2>🗂️ Kompres Beberapa File ke ZIP</h2>
+    <input type="file" id="zipInput" multiple>
+    <button id="compressZipBtn">Buat ZIP</button>
+    <div id="zipResult" class="result"></div>
+  </div>
+
+  <!-- ==================== KOMPRES FOLDER KE ZIP ==================== -->
+  <div class="section">
+    <h2>📁 Kompres Satu Folder ke ZIP</h2>
+    <input type="file" id="folderInput" webkitdirectory directory multiple>
+    <button id="compressFolderBtn">Kompres Folder</button>
+    <div id="folderResult" class="result"></div>
+  </div>
+
+  <footer>
+    💡 Semua proses dilakukan <b>offline di browser</b> — aman & cepat.
+  </footer>
+
+  <!-- Library -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+  <script>
+    const pdfInput = document.getElementById("pdfInput");
+    const zipInput = document.getElementById("zipInput");
+    const folderInput = document.getElementById("folderInput");
+
+    const pdfResult = document.getElementById("pdfResult");
+    const zipResult = document.getElementById("zipResult");
+    const folderResult = document.getElementById("folderResult");
+
+    // ================== 🔹 KOMPRES PDF ==================
+    document.getElementById("compressPdfBtn").addEventListener("click", async () => {
+      const file = pdfInput.files[0];
+      if (!file) return alert("Pilih file PDF dulu!");
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        const compressed = await pdfDoc.save({ useObjectStreams: true });
+
+        const blob = new Blob([compressed], { type: "application/pdf" });
+        const before = (file.size / 1024 / 1024).toFixed(2);
+        const after = (blob.size / 1024 / 1024).toFixed(2);
+
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "hasil_kompres.pdf";
+        link.textContent = "💾 Download PDF Hasil Kompres";
+        link.className = "download";
+
+        pdfResult.innerHTML = `
+          Ukuran sebelum: <b>${before} MB</b><br>
+          Ukuran sesudah: <b>${after} MB</b><br>
+        `;
+        pdfResult.appendChild(link);
+      } catch (err) {
+        alert("❌ Gagal mengompres PDF");
+        console.error(err);
+      }
+    });
+
+    // ================== 🔹 KOMPRES FILE KE ZIP ==================
+    document.getElementById("compressZipBtn").addEventListener("click", async () => {
+      const files = zipInput.files;
+      if (!files.length) return alert("Pilih beberapa file dulu!");
+
+      zipResult.innerHTML = "⏳ Sedang membuat ZIP...";
+      const zip = new JSZip();
+      for (let file of files) {
+        zip.file(file.name, file);
+      }
+
+      const blob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 9 }
+      });
+
+      const totalSize = (blob.size / 1024 / 1024).toFixed(2);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "file_kompres.zip";
+      link.textContent = "💾 Download File ZIP";
+      link.className = "download";
+
+      zipResult.innerHTML = `
+        Jumlah file: <b>${files.length}</b><br>
+        Ukuran ZIP: <b>${totalSize} MB</b><br>
+      `;
+      zipResult.appendChild(link);
+    });
+
+    // ================== 🔹 KOMPRES FOLDER KE ZIP ==================
+    document.getElementById("compressFolderBtn").addEventListener("click", async () => {
+      const files = folderInput.files;
+      if (!files.length) return alert("Pilih folder terlebih dahulu!");
+
+      folderResult.innerHTML = "⏳ Sedang memproses folder...";
+      const zip = new JSZip();
+
+      for (let file of files) {
+        const relativePath = file.webkitRelativePath;
+        zip.file(relativePath, file);
+      }
+
+      const blob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 9 }
+      });
+
+      const totalSize = (blob.size / 1024 / 1024).toFixed(2);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "folder_kompres.zip";
+      link.textContent = "💾 Download ZIP Folder";
+      link.className = "download";
+
+      folderResult.innerHTML = `
+        Jumlah file dalam folder: <b>${files.length}</b><br>
+        Ukuran ZIP: <b>${totalSize} MB</b><br>
+      `;
+      folderResult.appendChild(link);
+    });
+  </script>
+</body>
+</html>
